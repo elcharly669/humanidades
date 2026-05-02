@@ -1,0 +1,100 @@
+# .htaccess — Línea base de seguridad para WordPress / Humanities Directory
+# ─────────────────────────────────────────────────────────────────────────────
+# CÓMO USAR:
+#   Fusiona estas reglas en el .htaccess de WordPress en el servidor de WP.
+#   Colócalas ANTES del bloque # BEGIN WordPress / # END WordPress.
+#
+# POR QUÉ este enfoque: Defensa en profundidad. El WAF de Cloudflare bloquea la
+#   mayoría de los ataques en el edge, pero las reglas de .htaccess se ejecutan
+#   en el servidor de origen, proporcionando una segunda capa si alguna solicitud
+#   elude Cloudflare (por ejemplo, acceso directo por IP).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Bloquear XML-RPC ──────────────────────────────────────────────────────────
+# POR QUÉ: XML-RPC es una API de publicación remota heredada. Es el endpoint de WP
+#           más abusado para fuerza bruta de credenciales. Un sitio headless no tiene
+#           ningún uso para él.
+<Files "xmlrpc.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# ── Proteger wp-config.php ────────────────────────────────────────────────────
+# POR QUÉ: wp-config.php contiene credenciales de BD, salts y flags de debug.
+#           Nunca debe ser accesible por web aunque el manejador de PHP falle.
+<Files "wp-config.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# ── Bloquear acceso directo a archivos PHP de wp-includes ────────────────────
+# POR QUÉ: wp-includes/ contiene el núcleo PHP de WordPress. Ningún archivo ahí
+#           debería ejecutarse directamente desde un navegador; WP los incluye
+#           del lado del servidor. Bloquear el acceso directo elimina una clase
+#           de ataques de inclusión de archivos.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^wp-admin/includes/ - [F,L]
+    RewriteRule !^wp-includes/ - [S=3]
+    RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
+    RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
+    RewriteRule ^wp-includes/theme-compat/ - [F,L]
+</IfModule>
+
+# ── Prevenir listado de directorios ───────────────────────────────────────────
+# POR QUÉ: Sin archivos de índice, Apache/LiteSpeed muestra el listado del directorio
+#           por defecto. Esto expone rutas de archivos, nombres de plugins y nombres
+#           de archivos multimedia a los atacantes.
+Options -Indexes
+
+# ── Bloquear acceso a archivos sensibles ─────────────────────────────────────
+# POR QUÉ: Estos archivos pueden contener credenciales, configuraciones de plugins
+#           o información del servidor. Nunca deben ser de lectura pública.
+<FilesMatch "(readme\.html|readme\.txt|license\.txt|wp-config\.php|wp-config-sample\.php|\.htaccess|\.htpasswd|error_log|php\.ini)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# ── Encabezados de respuesta de seguridad ─────────────────────────────────────
+# POR QUÉ: Cinturón y tirantes. Cloudflare los inyecta vía Transform Rules (ver
+#           docs/cloudflare-rules.md), pero las reglas de .htaccess aseguran que
+#           estén presentes también en acceso directo al origen o en entornos de
+#           staging sin CF.
+<IfModule mod_headers.c>
+    # Evita que los navegadores hagan MIME-sniffing — cierra un vector de XSS
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Bloquea el clickjacking evitando que el sitio se embeba en un iframe de un dominio de terceros
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Limita los datos del referrer enviados a sitios externos
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Eliminar la divulgación de la versión del servidor
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+# ── Limitar métodos de solicitud ──────────────────────────────────────────────
+# POR QUÉ: La REST API de WordPress es de solo lectura desde la perspectiva de
+#           Cloudflare (Regla 1 en cloudflare-rules.md). Esta regla de .htaccess
+#           agrega aplicación a nivel del servidor de origen.
+#           OPTIONS se permite porque algunos clientes HTTP envían una solicitud preflight.
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reglas de reescritura estándar de WordPress — no editar debajo de esta línea
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^index\.php$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

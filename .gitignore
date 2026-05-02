@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────
+# Node / Astro
+# ──────────────────────────────────────────────
+node_modules/
+dist/
+.output/
+.astro/
+.vercel/
+.netlify/
+
+# Astro build cache
+web/.astro/
+web/dist/
+web/node_modules/
+
+# Environment variables — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+web/.env
+web/.env.local
+
+# ──────────────────────────────────────────────
+# OS / editors
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/settings.json
+.idea/
+
+# ──────────────────────────────────────────────
+# WordPress — only commit plugin/theme source,
+# never the full WP install
+# ──────────────────────────────────────────────
+wordpress/wp-core/
+wordpress/wp-content/uploads/
+*.log
+
+# ──────────────────────────────────────────────
+# Misc
+# ──────────────────────────────────────────────
+*.bak
+*.orig

@@ -1,0 +1,126 @@
+---
+/**
+ * PersonCard.astro
+ * ──────────────────────────────────────────────────────────────────────────────
+ * Tarjeta del listado del directorio para una sola Persona.
+ * Se renderiza como <article> por corrección semántica — cada tarjeta es una
+ * unidad de contenido autónoma (spec HTML5: "distribuible de forma independiente").
+ *
+ * Las props coinciden con la interfaz Person de lib/wp.ts.
+ * ──────────────────────────────────────────────────────────────────────────────
+ */
+
+interface Props {
+  slug: string;
+  name: string;
+  titulo?: string;
+  departamento?: string;
+  areasInvestigacion: string[];
+  photoUrl?: string;
+  email?: string;
+}
+
+const { slug, name, titulo, departamento, areasInvestigacion, photoUrl, email } =
+  Astro.props;
+
+// Iniciales de respaldo cuando no hay foto disponible — evita etiquetas <img> rotas
+const initials = name
+  .split(' ')
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((w) => w[0].toUpperCase())
+  .join('');
+---
+
+<article
+  class="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col"
+  aria-labelledby={`person-name-${slug}`}
+>
+  <!-- Foto / avatar de iniciales -->
+  <a href={`/personas/${slug}`} class="block" tabindex="-1" aria-hidden="true">
+    <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+      {
+        photoUrl ? (
+          <img
+            src={photoUrl}
+            alt={`Fotografía de ${name}`}
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
+            width="400"
+            height="300"
+          />
+        ) : (
+          <div
+            class="w-full h-full flex items-center justify-center bg-brand text-white text-4xl font-semibold"
+            aria-hidden="true"
+          >
+            {initials}
+          </div>
+        )
+      }
+    </div>
+  </a>
+
+  <!-- Cuerpo de la tarjeta -->
+  <div class="p-5 flex flex-col flex-1 gap-2">
+    <!-- Nombre -->
+    <h2
+      id={`person-name-${slug}`}
+      class="text-base font-semibold text-gray-900 leading-snug"
+    >
+      <a
+        href={`/personas/${slug}`}
+        class="hover:text-brand-light underline-offset-2 hover:underline transition-colors"
+      >
+        {name}
+      </a>
+    </h2>
+
+    <!-- Cargo -->
+    {titulo && <p class="text-sm text-brand font-medium">{titulo}</p>}
+
+    <!-- Departamento -->
+    {departamento && <p class="text-xs text-gray-500">{departamento}</p>}
+
+    <!-- Áreas de investigación — renderizadas como lista de etiquetas visualmente distintas -->
+    {
+      areasInvestigacion.length > 0 && (
+        <ul
+          class="flex flex-wrap gap-1 mt-1"
+          aria-label="Áreas de investigación"
+          role="list"
+        >
+          {areasInvestigacion.slice(0, 3).map((area) => (
+            <li class="text-[11px] bg-brand/10 text-brand-light px-2 py-0.5 rounded-full font-medium leading-5">
+              {area}
+            </li>
+          ))}
+          {areasInvestigacion.length > 3 && (
+            <li class="text-[11px] text-gray-400 px-1 leading-5">
+              +{areasInvestigacion.length - 3} más
+            </li>
+          )}
+        </ul>
+      )
+    }
+
+    <!-- Espaciador: empuja el correo al fondo -->
+    <div class="flex-1" />
+
+    <!-- Correo electrónico -->
+    {
+      email && (
+        <a
+          href={`mailto:${email}`}
+          class="text-xs text-gray-500 hover:text-brand transition-colors mt-2 truncate block"
+          aria-label={`Enviar correo a ${name}`}
+        >
+          {/* El correo se renderiza directamente: si Cloudflare Email Obfuscation
+              está activado en el CDN, lo ofuscará automáticamente en la respuesta. */}
+          {email}
+        </a>
+      )
+    }
+  </div>
+</article>

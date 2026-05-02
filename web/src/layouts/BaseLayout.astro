@@ -1,0 +1,239 @@
+---
+/**
+ * BaseLayout.astro
+ * ──────────────────────────────────────────────────────────────────────────────
+ * Estructura compartida para todas las páginas. Se encarga de:
+ *   - <head> con canonical, OG y meta de Twitter
+ *   - Enlace de saltar navegación (WCAG 2.4.1)
+ *   - Navegación del sitio con estructura amigable para móviles
+ *   - Pie de página con crédito institucional
+ *
+ * Props:
+ *   title        — <title> de la página (requerido)
+ *   description  — Meta descripción (requerido, máximo 160 caracteres)
+ *   ogImage      — URL absoluta para imagen OG (opcional, usa imagen por defecto)
+ *   canonicalURL — Sobreescribe la URL canónica (opcional, por defecto usa Astro.url)
+ * ──────────────────────────────────────────────────────────────────────────────
+ */
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonicalURL?: string;
+}
+
+const {
+  title,
+  description,
+  ogImage = '/og-default.png',
+  canonicalURL = Astro.url.href,
+} = Astro.props;
+
+// Nombre del sitio inyectado en tiempo de compilación; se usa en el sufijo de <title> y etiquetas OG
+const SITE_NAME = 'Directorio · Facultad de Humanidades';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Meta primarios -->
+    <title>{title} | {SITE_NAME}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={`${title} | ${SITE_NAME}`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site).href} />
+    <meta property="og:locale" content="es_MX" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} | ${SITE_NAME}`} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site).href} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Rendimiento: preconectar al CDN de Google Fonts antes de la solicitud de fuente -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Pista de encabezado de seguridad: el CSP se aplica principalmente en Cloudflare / servidor.
+         Esta etiqueta meta provee una capa adicional de protección. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' https://www.googletagmanager.com"
+    />
+
+    <!-- Google Tag Manager — carga de forma asíncrona, no bloquea el renderizado -->
+    <!-- Reemplaza GTM-XXXXXXX con el ID real del contenedor antes del lanzamiento -->
+    <!-- prettier-ignore -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+  </head>
+
+  <body class="bg-white text-gray-900 font-sans antialiased">
+    <!-- Fallback noscript de GTM — necesario para que los tags funcionen sin JS -->
+    <noscript>
+      <iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
+      ></iframe>
+    </noscript>
+
+    <!-- Enlace de saltar navegación — visible al recibir foco de teclado para usuarios de lectores de pantalla -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-brand focus:text-white focus:rounded focus:text-sm focus:font-semibold"
+    >
+      Saltar al contenido principal
+    </a>
+
+    <!-- ── Navegación del sitio ──────────────────────────────────────────── -->
+    <header class="bg-brand text-white shadow-md">
+      <nav
+        class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+        aria-label="Navegación principal"
+      >
+        <a
+          href="/"
+          class="flex items-center gap-2 font-semibold text-lg tracking-tight hover:text-brand-accent transition-colors"
+        >
+          <!-- Escudo universitario de marcador — reemplazar con etiqueta <img> -->
+          <span aria-hidden="true" class="text-brand-accent text-2xl">⬡</span>
+          Facultad de Humanidades
+        </a>
+
+        <!-- Links de navegación escritorio -->
+        <ul class="hidden sm:flex items-center gap-6 text-sm font-medium" role="list">
+          <li>
+            <a href="/" class="hover:text-brand-accent transition-colors">
+              Directorio
+            </a>
+          </li>
+          <li>
+            <a
+              href="/departamentos"
+              class="hover:text-brand-accent transition-colors"
+            >
+              Departamentos
+            </a>
+          </li>
+          <li>
+            <a
+              href="/investigacion"
+              class="hover:text-brand-accent transition-colors"
+            >
+              Investigación
+            </a>
+          </li>
+        </ul>
+
+        <!-- Toggle de menú móvil — sin JavaScript, usa el truco del checkbox -->
+        <label
+          for="mobile-menu-toggle"
+          class="sm:hidden cursor-pointer p-2 rounded hover:bg-brand-light transition-colors"
+          aria-label="Abrir menú"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </label>
+      </nav>
+
+      <!-- Menú móvil — oculto por defecto, visible cuando el checkbox está marcado -->
+      <input type="checkbox" id="mobile-menu-toggle" class="hidden peer" />
+      <div
+        class="hidden peer-checked:block sm:hidden bg-brand-light border-t border-brand-light/50"
+      >
+        <ul class="px-4 py-3 space-y-2 text-sm font-medium" role="list">
+          <li>
+            <a href="/" class="block py-1 hover:text-brand-accent transition-colors">
+              Directorio
+            </a>
+          </li>
+          <li>
+            <a
+              href="/departamentos"
+              class="block py-1 hover:text-brand-accent transition-colors"
+            >
+              Departamentos
+            </a>
+          </li>
+          <li>
+            <a
+              href="/investigacion"
+              class="block py-1 hover:text-brand-accent transition-colors"
+            >
+              Investigación
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ── Slot de contenido de la página ───────────────────────────────── -->
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+
+    <!-- ── Pie de página ─────────────────────────────────────────────────── -->
+    <footer class="bg-gray-900 text-gray-400 mt-16">
+      <div
+        class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6"
+      >
+        <div>
+          <p class="text-white font-semibold text-sm">Facultad de Humanidades</p>
+          <p class="text-xs mt-1">Universidad · Ciudad, País</p>
+        </div>
+        <ul class="flex flex-wrap gap-4 text-xs" role="list">
+          <li>
+            <a href="/aviso-privacidad" class="hover:text-white transition-colors">
+              Aviso de privacidad
+            </a>
+          </li>
+          <li>
+            <a href="/contacto" class="hover:text-white transition-colors">
+              Contacto
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/your-org/humanities-web"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-white transition-colors"
+            >
+              GitHub
+            </a>
+          </li>
+        </ul>
+      </div>
+    </footer>
+  </body>
+</html>
