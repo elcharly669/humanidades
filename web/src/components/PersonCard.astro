@@ -9,6 +9,7 @@
 
 interface Props {
   slug: string;
+  prefix?: string;
   name: string;
   titulo?: string;
   departamento?: string;
@@ -17,10 +18,10 @@ interface Props {
   email?: string;
 }
 
-const { slug, name, titulo, departamento, areasInvestigacion, photoUrl, email } =
+const { slug, prefix, name, titulo, departamento, areasInvestigacion, photoUrl, email } =
   Astro.props;
 
-// Iniciales de respaldo cuando no hay foto disponible
+// Iniciales de respaldo cuando no hay foto disponible (usa solo el nombre, sin prefijo)
 const initials = name
   .split(' ')
   .filter(Boolean)
@@ -74,6 +75,10 @@ const initials = name
       id={`person-name-${slug}`}
       class="text-base sm:text-lg font-medium text-ink leading-snug"
     >
+      {prefix && (
+        <!-- Tratamiento académico: ligeramente más pequeño y atenuado -->
+        <span class="text-sm sm:text-base font-normal text-ink-muted mr-1">{prefix}</span>
+      )}
       <a
         href={`/personas/${slug}`}
         class="relative z-10 hover:text-brand transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-sm"

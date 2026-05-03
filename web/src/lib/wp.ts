@@ -51,7 +51,9 @@ export interface Publication {
 export interface Person {
   id: number;
   slug: string;
-  /** Título del post = nombre completo */
+  /** Tratamiento académico extraído del nombre: Dr., Dra., Mtro., Mtra., Lic., etc. */
+  prefix?: string;
+  /** Nombre completo sin el tratamiento */
   name: string;
   /** ACF: cargo / título */
   titulo?: string;
@@ -96,8 +98,17 @@ interface WpPersonaRaw {
 
 // ── Función de normalización ──────────────────────────────────────────────────
 
+// Tratamientos académicos reconocidos — se extraen del inicio del nombre
+const PREFIX_RE = /^(Dr\.a?|Dra\.|Mtro\.|Mtra\.|Lic\.|M\.C\.|Dr\.C\.|Ing\.|Arq\.|Profr?\.a?)\.?\s+/i;
+
 function normalisePersona(raw: WpPersonaRaw): Person {
   const acf = raw.acf ?? {};
+
+  // Separar tratamiento del nombre completo
+  const rawName = raw.title.rendered;
+  const prefixMatch = rawName.match(PREFIX_RE);
+  const prefix = prefixMatch ? prefixMatch[0].trim() : undefined;
+  const name = prefix ? rawName.slice(prefixMatch![0].length) : rawName;
 
   // areas_investigacion puede llegar como string (separado por comas) o ya como array
   const areasRaw = acf.areas_investigacion ?? [];
@@ -119,7 +130,8 @@ function normalisePersona(raw: WpPersonaRaw): Person {
   return {
     id: raw.id,
     slug: raw.slug,
-    name: raw.title.rendered,
+    prefix,
+    name,
     titulo: acf.titulo,
     departamento: acf.departamento,
     areasInvestigacion,

@@ -64,23 +64,36 @@ const schemaItemList = {
 
   <!-- ── Contenido principal ─────────────────────────────────────────────── -->
   <div class="max-w-layout mx-auto px-6 sm:px-8 py-10 flex flex-col lg:flex-row gap-12">
-    <!-- Sidebar con enlaces de salto por departamento -->
-    <aside class="lg:w-52 shrink-0" aria-label="Saltar a departamento">
+    <!-- Sidebar — filtro por departamento (JS puro, cero dependencias) -->
+    <aside class="lg:w-52 shrink-0" aria-label="Filtrar por departamento">
       <nav class="sticky top-6">
         <p class="text-xs tracking-[0.2em] uppercase text-ink-muted mb-4">Departamentos</p>
         <ul class="space-y-0.5" role="list">
+          <!-- Botón “Todos” -->
+          <li>
+            <button
+              id="filter-all"
+              data-filter=""
+              class="filter-btn w-full flex justify-between items-center text-sm py-2 border-l-2 border-brand-accent pl-3 text-ink font-medium transition-all text-left"
+              aria-pressed="true"
+            >
+              <span>Todos</span>
+              <span class="text-xs text-ink-muted ml-3 tabular-nums">{personas.length}</span>
+            </button>
+          </li>
           {
             departments.map((dept) => (
               <li>
-                <a
-                  href={`#dept-${encodeURIComponent(dept)}`}
-                  class="flex justify-between items-center text-ink-soft hover:text-ink py-2 border-l border-transparent hover:border-brand-accent pl-3 transition-all text-sm focus-visible:outline-2 focus-visible:outline-brand rounded-sm"
+                <button
+                  data-filter={dept}
+                  class="filter-btn w-full flex justify-between items-center text-sm py-2 border-l-2 border-transparent pl-3 text-ink-soft hover:text-ink hover:border-brand-accent transition-all text-left focus-visible:outline-2 focus-visible:outline-brand rounded-sm"
+                  aria-pressed="false"
                 >
                   <span class="line-clamp-2 leading-snug">{dept}</span>
                   <span class="text-xs text-ink-muted ml-3 shrink-0 tabular-nums">
                     {byDepartment[dept].length}
                   </span>
-                </a>
+                </button>
               </li>
             ))
           }
@@ -88,26 +101,28 @@ const schemaItemList = {
       </nav>
     </aside>
 
-    <!-- Lista de personas agrupada por departamento -->
-    <div class="flex-1 min-w-0 space-y-14">
-      {
-        departments.map((dept) => (
-          <section aria-labelledby={`dept-heading-${encodeURIComponent(dept)}`}>
-            <h2
-              id={`dept-heading-${encodeURIComponent(dept)}`}
-              class="text-xs tracking-[0.2em] uppercase text-ink-muted mb-3"
+      <!-- Lista de personas agrupada por departamento -->
+      <div class="flex-1 min-w-0 space-y-14" id="directory-list">
+        {
+          departments.map((dept) => (
+            <section
+              aria-labelledby={`dept-heading-${encodeURIComponent(dept)}`}
+              data-dept={dept}
             >
-              <!-- scroll-mt asegura que el anchor no quede bajo el nav sticky -->
-              <span id={`dept-${encodeURIComponent(dept)}`} class="scroll-mt-20">{dept}</span>
-            </h2>
-            <div class="border-t border-paper-border">
-              {byDepartment[dept].map((persona) => (
-                <PersonCard {...persona} />
-              ))}
-            </div>
-          </section>
-        ))
-      }
+              <h2
+                id={`dept-heading-${encodeURIComponent(dept)}`}
+                class="text-xs tracking-[0.2em] uppercase text-ink-muted mb-3"
+              >
+                <span id={`dept-${encodeURIComponent(dept)}`} class="scroll-mt-20">{dept}</span>
+              </h2>
+              <div class="border-t border-paper-border">
+                {byDepartment[dept].map((persona) => (
+                  <PersonCard {...persona} />
+                ))}
+              </div>
+            </section>
+          ))
+        }
 
       <!-- Estado vacío — solo si WP no está configurado -->
       {

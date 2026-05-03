@@ -1,0 +1,8 @@
+kind: wasmer.io/App.v0
+name: dirhumanidades
+owner: elcharly669
+package: .
+
+volumes:
+  - name: wp-uploads
+    mount: /app/wp-content/uploads

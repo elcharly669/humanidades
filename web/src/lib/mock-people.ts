@@ -4,7 +4,8 @@ export const mockPeople: Person[] = [
   {
     id: 1,
     slug: 'ludwig-wittgenstein',
-    name: 'Dr. Ludwig Wittgenstein',
+    prefix: 'Dr.',
+    name: 'Ludwig Wittgenstein',
     titulo: 'Profesor titular de Filosofía del Lenguaje',
     departamento: 'Filosofía',
     areasInvestigacion: ['Filosofía del lenguaje', 'Lógica', 'Filosofía de la mente'],
@@ -29,7 +30,8 @@ export const mockPeople: Person[] = [
   {
     id: 2,
     slug: 'judith-butler',
-    name: 'Dra. Judith Butler',
+    prefix: 'Dra.',
+    name: 'Judith Butler',
     titulo: 'Investigadora titular de Teoría Crítica',
     departamento: 'Filosofía',
     areasInvestigacion: ['Teoría de género', 'Filosofía política', 'Ética', 'Estudios culturales'],
@@ -60,7 +62,8 @@ export const mockPeople: Person[] = [
   {
     id: 3,
     slug: 'georg-hegel',
-    name: 'Dr. Georg Wilhelm Friedrich Hegel',
+    prefix: 'Dr.',
+    name: 'Georg Wilhelm Friedrich Hegel',
     titulo: 'Profesor emérito de Idealismo y Dialéctica',
     departamento: 'Filosofía',
     areasInvestigacion: ['Idealismo alemán', 'Dialéctica', 'Filosofía del espíritu', 'Filosofía de la historia'],
@@ -85,7 +88,8 @@ export const mockPeople: Person[] = [
   {
     id: 4,
     slug: 'hannah-arendt',
-    name: 'Dra. Hannah Arendt',
+    prefix: 'Dra.',
+    name: 'Hannah Arendt',
     titulo: 'Investigadora titular de Filosofía Política',
     departamento: 'Filosofía',
     areasInvestigacion: ['Filosofía política', 'Teoría del totalitarismo', 'Acción y libertad', 'Pensamiento y juicio'],
@@ -110,7 +114,8 @@ export const mockPeople: Person[] = [
   {
     id: 5,
     slug: 'bertrand-russell',
-    name: 'Dr. Bertrand Russell',
+    prefix: 'Dr.',
+    name: 'Bertrand Russell',
     titulo: 'Profesor titular de Lógica y Filosofía Analítica',
     departamento: 'Filosofía',
     areasInvestigacion: ['Lógica matemática', 'Epistemología', 'Filosofía analítica', 'Teoría del conocimiento'],

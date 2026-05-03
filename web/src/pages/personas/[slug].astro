@@ -37,6 +37,7 @@ const { persona } = Astro.props;
 const {
   name,
   slug,
+  prefix,
   titulo,
   departamento,
   areasInvestigacion,
@@ -81,7 +82,7 @@ const metaDescription = bio
   ? bio.replace(/<[^>]*>/g, '').slice(0, 157) + '…'
   : `Perfil académico de ${name}${titulo ? `, ${titulo}` : ''}${departamento ? ` — ${departamento}` : ''}.`;
 
-// Iniciales de respaldo
+// Iniciales de respaldo (usa solo el nombre sin prefijo)
 const initials = name
   .split(' ')
   .filter(Boolean)
@@ -143,6 +144,10 @@ const initials = name
         </p>
 
         <!-- Nombre — h1 principal -->
+        <!-- Tratamiento académico sobre el nombre, tipográficamente diferenciado -->
+        {prefix && (
+          <p class="text-base sm:text-lg text-ink-muted font-normal leading-none mb-1 tracking-wide">{prefix}</p>
+        )}
         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink tracking-tight leading-tight">
           {name}
         </h1>
