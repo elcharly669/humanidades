@@ -68,168 +68,151 @@ function hum_register_persona_cpt(): void {
     register_post_type('persona', $args);
 }
 
-// ── 2. Registrar grupo de campos ACF (respaldo programático) ──────────────────
-// Fuente de verdad primaria: cms-export/acf-person-fields.json (cargado automáticamente por ACF
-// cuando el archivo JSON está en el directorio acf-json del tema/plugin).
-// Este código registra los mismos campos en PHP como respaldo si el JSON no está presente.
+// ── 1.5 Registrar Taxonomía (Departamento) ───────────────────────────────────
 
-add_action('acf/include_fields', 'hum_register_persona_fields');
+add_action('init', 'hum_register_departamento_tax');
 
-function hum_register_persona_fields(): void {
-    if (!function_exists('acf_add_local_field_group')) {
-        // ACF no está activo — los campos no se registrarán, pero el CPT sigue funcionando.
-        return;
-    }
+function hum_register_departamento_tax(): void {
+    $labels = [
+        'name'              => 'Departamentos',
+        'singular_name'     => 'Departamento',
+        'search_items'      => 'Buscar departamentos',
+        'all_items'         => 'Todos los departamentos',
+        'parent_item'       => 'Departamento superior',
+        'parent_item_colon' => 'Departamento superior:',
+        'edit_item'         => 'Editar departamento',
+        'update_item'       => 'Actualizar departamento',
+        'add_new_item'      => 'Añadir nuevo departamento',
+        'new_item_name'     => 'Nuevo nombre de departamento',
+        'menu_name'         => 'Departamentos',
+    ];
 
-    acf_add_local_field_group([
-        'key'      => 'group_persona_fields',
-        'title'    => 'Datos de la persona',
-        'fields'   => [
+    $args = [
+        'hierarchical'      => true, // true = se comporta como Categorías (casillas), false = como Tags
+        'labels'            => $labels,
+        'show_ui'           => true,
+        'show_admin_column' => true,
+        'query_var'         => true,
+        'rewrite'           => ['slug' => 'departamento'],
+        'show_in_rest'      => true, // Vital para Astro
+        'rest_base'         => 'departamentos',
+    ];
 
-            // ── Cargo ─────────────────────────────────────────────────────────
-            [
-                'key'           => 'field_persona_titulo',
-                'label'         => 'Cargo',
-                'name'          => 'titulo',
-                'type'          => 'text',
-                'required'      => 0,
-                'placeholder'   => 'Ej. Profesora titular',
-                'instructions'  => 'Cargo o título académico. Aparecerá debajo del nombre en el directorio.',
-            ],
+    register_taxonomy('departamento', ['persona'], $args);
+}
 
-            // ── Departamento ─────────────────────────────────────────────────
-            [
-                'key'           => 'field_persona_departamento',
-                'label'         => 'Departamento',
-                'name'          => 'departamento',
-                'type'          => 'select',
-                'required'      => 0,
-                'choices'       => [
-                    'Filosofía'             => 'Filosofía',
-                    'Historia'              => 'Historia',
-                    'Letras'                => 'Letras',
-                    'Lingüística'           => 'Lingüística',
-                    'Ciencias de la Comunicación' => 'Ciencias de la Comunicación',
-                    'Educación'             => 'Educación',
-                ],
-                'allow_null'    => 1,
-                'multiple'      => 0,
-                'ui'            => 1, // Interfaz mejorada con Select2
-                'instructions'  => 'Departamento al que pertenece la persona.',
-            ],
+// ── 2. Registrar grupo de campos CMB2 (con Repetidor gratis) ─────────────────
 
-            // ── Áreas de investigación ────────────────────────────────────────
-            [
-                'key'           => 'field_persona_areas',
-                'label'         => 'Áreas de investigación',
-                'name'          => 'areas_investigacion',
-                'type'          => 'text',
-                'required'      => 0,
-                'placeholder'   => 'Ej. Filosofía del lenguaje, Lógica, Ética',
-                'instructions'  => 'Separar las áreas con comas.',
-            ],
+add_action('cmb2_admin_init', 'hum_register_persona_cmb2');
 
-            // ── Correo electrónico ────────────────────────────────────────────
-            [
-                'key'           => 'field_persona_email',
-                'label'         => 'Correo electrónico',
-                'name'          => 'email',
-                'type'          => 'email',
-                'required'      => 0,
-                'instructions'  => 'Correo institucional. Se mostrará en el perfil público.',
-            ],
+function hum_register_persona_cmb2(): void {
+    $cmb = new_cmb2_box([
+        'id'            => 'persona_metabox',
+        'title'         => 'Datos de la persona',
+        'object_types'  => ['persona'],
+        'context'       => 'normal',
+        'priority'      => 'high',
+        'show_names'    => true,
+    ]);
 
-            // ── Biografía ─────────────────────────────────────────────────────
-            [
-                'key'           => 'field_persona_biografia',
-                'label'         => 'Semblanza / Biografía',
-                'name'          => 'biografia',
-                'type'          => 'wysiwyg',
-                'required'      => 0,
-                'tabs'          => 'visual',  // Editor simplificado para usuarios no técnicos
-                'toolbar'       => 'basic',
-                'media_upload'  => 0,         // Evita subir imágenes dentro del campo de bio
-                'instructions'  => 'Breve semblanza académica. Sin imágenes.',
-            ],
+    $cmb->add_field([
+        'name' => 'Cargo',
+        'desc' => 'Cargo o título académico. Aparecerá debajo del nombre.',
+        'id'   => 'titulo',
+        'type' => 'text',
+    ]);
 
-            // ── Publicaciones (repetidor) ─────────────────────────────────────
-            // ACF Free NO incluye el campo tipo Repetidor.
-            // Opción A: Usar ACF Pro.
-            // Opción B: Usar CMB2 con cmb2_field_type_group.
-            // Opción C: Codificar publicaciones como JSON en un textarea (simple, sin plugin adicional).
-            // El campo siguiente usa el tipo Repetidor; si solo se tiene ACF Free, cambiarlo a textarea.
-            [
-                'key'           => 'field_persona_publicaciones',
-                'label'         => 'Publicaciones',
-                'name'          => 'publicaciones',
-                'type'          => 'repeater',  // Requiere ACF Pro o alternativa con CMB2
-                'required'      => 0,
-                'min'           => 0,
-                'max'           => 50,
-                'layout'        => 'block',
-                'button_label'  => 'Agregar publicación',
-                'sub_fields'    => [
-                    [
-                        'key'   => 'field_pub_titulo',
-                        'label' => 'Título',
-                        'name'  => 'titulo_publicacion',
-                        'type'  => 'text',
-                    ],
-                    [
-                        'key'   => 'field_pub_autores',
-                        'label' => 'Autores',
-                        'name'  => 'autores',
-                        'type'  => 'text',
-                    ],
-                    [
-                        'key'   => 'field_pub_anio',
-                        'label' => 'Año',
-                        'name'  => 'anio',
-                        'type'  => 'number',
-                        'min'   => 1900,
-                        'max'   => 2099,
-                    ],
-                    [
-                        'key'   => 'field_pub_url',
-                        'label' => 'URL',
-                        'name'  => 'url',
-                        'type'  => 'url',
-                    ],
-                ],
-                'instructions'  => 'Agrega cada publicación por separado.',
-            ],
+    // El departamento ahora es una taxonomía (barra lateral), por lo que lo quitamos de aquí.
+
+    $cmb->add_field([
+        'name'       => 'Áreas de investigación',
+        'desc'       => 'Añade un área de investigación por línea.',
+        'id'         => 'areas_investigacion',
+        'type'       => 'text',
+        'repeatable' => true, // ¡Magia! Botón de [+] Añadir
+        'text'       => [
+            'add_row_text' => 'Añadir otra área',
         ],
-        'location' => [
-            [[
-                'param'     => 'post_type',
-                'operator'  => '==',
-                'value'     => 'persona',
-            ]],
+    ]);
+
+    $cmb->add_field([
+        'name' => 'Correo electrónico',
+        'desc' => 'Correo institucional.',
+        'id'   => 'email',
+        'type' => 'text_email',
+    ]);
+
+    $cmb->add_field([
+        'name' => 'Semblanza / Biografía',
+        'desc' => 'Breve semblanza académica. Sin imágenes.',
+        'id'   => 'biografia',
+        'type' => 'wysiwyg',
+        'options' => [
+            'textarea_rows' => 5,
+            'media_buttons' => false,
         ],
-        'menu_order'            => 0,
-        'position'              => 'normal',
-        'style'                 => 'seamless',
-        'label_placement'       => 'top',
-        'instruction_placement' => 'label',
-        'active'                => true,
+    ]);
+
+    // El Repetidor (Group Field)
+    $group_id = $cmb->add_field([
+        'id'          => 'publicaciones',
+        'type'        => 'group',
+        'description' => 'Agrega cada publicación por separado.',
+        'options'     => [
+            'group_title'       => 'Publicación {#}',
+            'add_button'        => 'Añadir publicación',
+            'remove_button'     => 'Eliminar publicación',
+            'sortable'          => true,
+        ],
+    ]);
+
+    $cmb->add_group_field($group_id, [
+        'name' => 'Título',
+        'id'   => 'titulo_publicacion',
+        'type' => 'text',
+    ]);
+
+    $cmb->add_group_field($group_id, [
+        'name' => 'Autores',
+        'id'   => 'autores',
+        'type' => 'text',
+    ]);
+
+    $cmb->add_group_field($group_id, [
+        'name' => 'Año',
+        'id'   => 'anio',
+        'type' => 'text_small',
+    ]);
+
+    $cmb->add_group_field($group_id, [
+        'name' => 'URL',
+        'id'   => 'url',
+        'type' => 'text_url',
     ]);
 }
 
-// ── 3. Exponer campos ACF en la respuesta de la REST API ──────────────────────
-// Por defecto, los campos ACF NO se incluyen en las respuestas de la REST API.
-// Este filtro agrega una clave `acf` a cada respuesta de /wp-json/wp/v2/persona.
+// ── 3. Exponer campos CMB2 en la respuesta de la REST API ─────────────────────
+// Lo metemos bajo la clave 'acf' para que el frontend de Astro no note la diferencia
+// y siga funcionando exactamente igual sin tener que tocar el TypeScript.
 
-add_filter('rest_prepare_persona', 'hum_expose_acf_in_rest', 10, 3);
+add_filter('rest_prepare_persona', 'hum_expose_cmb2_in_rest', 10, 3);
 
-function hum_expose_acf_in_rest(
+function hum_expose_cmb2_in_rest(
     WP_REST_Response $response,
     WP_Post $post,
     WP_REST_Request $request
 ): WP_REST_Response {
-    if (function_exists('get_fields')) {
-        // get_fields() devuelve todos los valores ACF del post
-        $response->data['acf'] = get_fields($post->ID) ?: [];
-    }
+    // Obtener los nombres de los departamentos asignados a esta persona
+    $departamentos = wp_get_object_terms($post->ID, 'departamento', ['fields' => 'names']);
+
+    $response->data['acf'] = [
+        'titulo'              => get_post_meta($post->ID, 'titulo', true),
+        'departamento'        => is_array($departamentos) && !is_wp_error($departamentos) ? $departamentos[0] : null,
+        'areas_investigacion' => get_post_meta($post->ID, 'areas_investigacion', true),
+        'email'               => get_post_meta($post->ID, 'email', true),
+        'biografia'           => wpautop(get_post_meta($post->ID, 'biografia', true)),
+        'publicaciones'       => get_post_meta($post->ID, 'publicaciones', true) ?: [],
+    ];
     return $response;
 }
 
