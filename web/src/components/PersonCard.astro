@@ -2,11 +2,8 @@
 /**
  * PersonCard.astro
  * ──────────────────────────────────────────────────────────────────────────────
- * Tarjeta del listado del directorio para una sola Persona.
- * Se renderiza como <article> por corrección semántica — cada tarjeta es una
- * unidad de contenido autónoma (spec HTML5: "distribuible de forma independiente").
- *
- * Las props coinciden con la interfaz Person de lib/wp.ts.
+ * Fila editorial del directorio — toda la fila es clickeable (overlay link).
+ * Jerarquía: Nombre → Cargo → Email CTA → Áreas | Departamento (derecha)
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
@@ -23,7 +20,7 @@ interface Props {
 const { slug, name, titulo, departamento, areasInvestigacion, photoUrl, email } =
   Astro.props;
 
-// Iniciales de respaldo cuando no hay foto disponible — evita etiquetas <img> rotas
+// Iniciales de respaldo cuando no hay foto disponible
 const initials = name
   .split(' ')
   .filter(Boolean)
@@ -33,12 +30,20 @@ const initials = name
 ---
 
 <article
-  class="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col"
+  class="group relative flex items-start gap-4 sm:gap-6 py-5 sm:py-7 border-b border-paper-border hover:bg-paper-warm transition-colors duration-150"
   aria-labelledby={`person-name-${slug}`}
 >
-  <!-- Foto / avatar de iniciales -->
-  <a href={`/personas/${slug}`} class="block" tabindex="-1" aria-hidden="true">
-    <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+  <!-- Overlay: hace toda la fila clickeable sin anidar <a> en <a> -->
+  <a
+    href={`/personas/${slug}`}
+    class="absolute inset-0 z-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+    aria-hidden="true"
+    tabindex="-1"
+  ></a>
+
+  <!-- Avatar -->
+  <div class="relative z-10 shrink-0 mt-0.5" aria-hidden="true">
+    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden ring-1 ring-paper-border">
       {
         photoUrl ? (
           <img
@@ -47,12 +52,12 @@ const initials = name
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
             decoding="async"
-            width="400"
-            height="300"
+            width="48"
+            height="48"
           />
         ) : (
           <div
-            class="w-full h-full flex items-center justify-center bg-brand text-white text-4xl font-semibold"
+            class="w-full h-full flex items-center justify-center bg-brand/10 text-brand font-medium text-sm"
             aria-hidden="true"
           >
             {initials}
@@ -60,67 +65,90 @@ const initials = name
         )
       }
     </div>
-  </a>
+  </div>
 
-  <!-- Cuerpo de la tarjeta -->
-  <div class="p-5 flex flex-col flex-1 gap-2">
-    <!-- Nombre -->
+  <!-- Columna principal: nombre, cargo, CTA de email, áreas -->
+  <div class="relative z-10 flex-1 min-w-0">
+    <!-- Nombre — CTA primario -->
     <h2
       id={`person-name-${slug}`}
-      class="text-base font-semibold text-gray-900 leading-snug"
+      class="text-base sm:text-lg font-medium text-ink leading-snug"
     >
       <a
         href={`/personas/${slug}`}
-        class="hover:text-brand-light underline-offset-2 hover:underline transition-colors"
+        class="relative z-10 hover:text-brand transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-sm"
       >
         {name}
       </a>
     </h2>
 
-    <!-- Cargo -->
-    {titulo && <p class="text-sm text-brand font-medium">{titulo}</p>}
+    <!-- Cargo — subtítulo visible y legible -->
+    {titulo && (
+      <p class="text-sm sm:text-base text-ink-soft mt-0.5 leading-snug">{titulo}</p>
+    )}
 
-    <!-- Departamento -->
-    {departamento && <p class="text-xs text-gray-500">{departamento}</p>}
+    <!-- Email como CTA secundario — solo en móvil (escritorio va en columna derecha) -->
+    {email && (
+      <a
+        href={`mailto:${email}`}
+        class="relative z-10 inline-flex items-center gap-1 mt-2 text-xs text-brand border border-brand/25 bg-brand/5 hover:bg-brand/10 px-2.5 py-1 rounded-full transition-colors md:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        aria-label={`Enviar correo a ${name}`}
+      >
+        <!-- Icono envelope -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+        </svg>
+        {email}
+      </a>
+    )}
 
-    <!-- Áreas de investigación — renderizadas como lista de etiquetas visualmente distintas -->
+    <!-- Áreas de investigación -->
     {
       areasInvestigacion.length > 0 && (
         <ul
-          class="flex flex-wrap gap-1 mt-1"
+          class="flex flex-wrap gap-1.5 mt-2.5"
           aria-label="Áreas de investigación"
           role="list"
         >
           {areasInvestigacion.slice(0, 3).map((area) => (
-            <li class="text-[11px] bg-brand/10 text-brand-light px-2 py-0.5 rounded-full font-medium leading-5">
+            <li class="relative z-10 text-xs tracking-wide uppercase text-ink-muted border border-paper-border px-2 py-0.5 rounded-sm leading-5">
               {area}
             </li>
           ))}
           {areasInvestigacion.length > 3 && (
-            <li class="text-[11px] text-gray-400 px-1 leading-5">
-              +{areasInvestigacion.length - 3} más
+            <li
+              class="text-xs text-ink-muted self-center"
+              aria-label={`y ${areasInvestigacion.length - 3} áreas más`}
+            >
+              +{areasInvestigacion.length - 3}
             </li>
           )}
         </ul>
       )
     }
+  </div>
 
-    <!-- Espaciador: empuja el correo al fondo -->
-    <div class="flex-1" />
-
-    <!-- Correo electrónico -->
-    {
-      email && (
-        <a
-          href={`mailto:${email}`}
-          class="text-xs text-gray-500 hover:text-brand transition-colors mt-2 truncate block"
-          aria-label={`Enviar correo a ${name}`}
-        >
-          {/* El correo se renderiza directamente: si Cloudflare Email Obfuscation
-              está activado en el CDN, lo ofuscará automáticamente en la respuesta. */}
-          {email}
-        </a>
-      )
-    }
+  <!-- Columna derecha — solo escritorio: departamento + email CTA -->
+  <div class="relative z-10 hidden md:flex flex-col items-end gap-2 shrink-0 max-w-[240px] pt-0.5">
+    {departamento && (
+      <!-- Pill neutro: mismo border-radius que el CTA de email para equilibrio visual -->
+      <span class="inline-flex items-center text-xs text-ink-muted border border-paper-border px-3 py-1.5 rounded-full leading-none">
+        {departamento}
+      </span>
+    )}
+    {email && (
+      <a
+        href={`mailto:${email}`}
+        class="inline-flex items-center gap-1.5 text-xs text-brand border border-brand/25 bg-brand/5 hover:bg-brand/10 px-3 py-1.5 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        aria-label={`Enviar correo a ${name}`}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+        </svg>
+        Escribir
+      </a>
+    )}
   </div>
 </article>

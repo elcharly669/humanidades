@@ -168,9 +168,13 @@ async function fetchPersonasPage(
 /**
  * Devuelve TODAS las personas, obteniendo todas las páginas automáticamente.
  * Los resultados se ordenan alfabéticamente por nombre para un renderizado consistente.
+ * Si WP_API_BASE_URL no está configurada, devuelve los datos de desarrollo (mock).
  */
 export async function getAllPersonas(): Promise<Person[]> {
-  if (!BASE_URL) return []; // fallback cuando WP no está configurado
+  if (!BASE_URL) {
+    const { mockPeople } = await import('./mock-people');
+    return mockPeople.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }
 
   const firstPage = await fetchPersonasPage(1);
   const results: WpPersonaRaw[] = [...firstPage.data];
@@ -193,7 +197,7 @@ export async function getPersonaBySlug(slug: string): Promise<Person> {
   const all = await getAllPersonas();
   const found = all.find((p) => p.slug === slug);
   if (!found) {
-    throw new Error(`[wp.ts] Persona con slug "${slug}" no encontrada en la API de WP`);
+    throw new Error(`[wp.ts] Persona con slug "${slug}" no encontrada`);
   }
   return found;
 }

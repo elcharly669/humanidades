@@ -50,8 +50,6 @@ const {
 const canonicalURL = new URL(`/personas/${slug}`, Astro.site).href;
 
 // ── Schema.org Person ─────────────────────────────────────────────────────────
-// Especificación completa: https://schema.org/Person
-// Los campos se omiten intencionalmente cuando están vacíos para mantener el JSON-LD limpio.
 const schemaPerson: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': 'Person',
@@ -78,7 +76,7 @@ if (publicaciones.length > 0)
     url: p.url,
   }));
 
-// Descripción para meta tag: prefiere los primeros 160 caracteres del bio, si no usa texto genérico
+// Descripción para meta tag
 const metaDescription = bio
   ? bio.replace(/<[^>]*>/g, '').slice(0, 157) + '…'
   : `Perfil académico de ${name}${titulo ? `, ${titulo}` : ''}${departamento ? ` — ${departamento}` : ''}.`;
@@ -98,21 +96,21 @@ const initials = name
   ogImage={photoUrl}
   canonicalURL={canonicalURL}
 >
-  <!-- Schema.org JSON-LD en <head> vía mecanismo de slot de BaseLayout -->
+  <!-- Schema.org JSON-LD -->
   <script
     slot="head"
     type="application/ld+json"
     set:html={JSON.stringify(schemaPerson)}
   />
 
-  <!-- ── Hero del perfil ───────────────────────────────────────────────── -->
-  <section class="bg-brand text-white">
+  <!-- ── Hero del perfil — alineado con paleta paper/ink ─────────────────── -->
+  <section class="border-b border-paper-border">
     <div
-      class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col sm:flex-row items-center sm:items-end gap-8"
+      class="max-w-layout mx-auto px-6 sm:px-8 pt-12 pb-10 flex flex-col sm:flex-row items-start sm:items-end gap-8"
     >
-      <!-- Avatar -->
+      <!-- Avatar grande -->
       <div
-        class="w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden border-4 border-brand-accent shadow-xl shrink-0"
+        class="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden ring-2 ring-paper-border shrink-0"
         aria-hidden="true"
       >
         {
@@ -123,64 +121,85 @@ const initials = name
               class="w-full h-full object-cover"
               loading="eager"
               decoding="async"
-              width="176"
-              height="176"
+              width="128"
+              height="128"
             />
           ) : (
-            <div class="w-full h-full flex items-center justify-center bg-brand-light text-white text-5xl font-semibold">
+            <div class="w-full h-full flex items-center justify-center bg-brand/10 text-brand text-3xl font-medium">
               {initials}
             </div>
           )
         }
       </div>
 
-      <!-- Nombre + metadatos -->
-      <div class="text-center sm:text-left">
-        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">{name}</h1>
-        {
-          titulo && (
-            <p class="mt-1 text-brand-accent text-lg font-medium">{titulo}</p>
-          )
-        }
-        {
-          departamento && (
-            <p class="mt-0.5 text-white/70 text-sm">{departamento}</p>
-          )
-        }
-        {
-          email && (
+      <!-- Nombre + metadatos — jerarquía editorial -->
+      <div class="flex-1 min-w-0">
+        <!-- Breadcrumb de contexto -->
+        <p class="text-xs tracking-[0.18em] uppercase text-ink-muted mb-3">
+          <a href="/" class="hover:text-ink transition-colors">Directorio</a>
+          {departamento && (
+            <> &middot; {departamento}</>
+          )}
+        </p>
+
+        <!-- Nombre — h1 principal -->
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink tracking-tight leading-tight">
+          {name}
+        </h1>
+
+        <!-- Cargo/título académico — subtítulo prominente -->
+        {titulo && (
+          <p class="mt-2 text-lg sm:text-xl text-brand font-medium leading-snug">
+            {titulo}
+          </p>
+        )}
+
+        <!-- Acciones: email CTA + volver -->
+        <div class="mt-5 flex flex-wrap gap-3 items-center">
+          {email && (
             <a
               href={`mailto:${email}`}
-              class="inline-block mt-3 text-sm text-brand-accent hover:underline"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-brand text-paper/90 text-sm font-medium rounded-full hover:bg-brand-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
               aria-label={`Enviar correo electrónico a ${name}`}
             >
-              {email}
+              <!-- Icono envelope -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+              </svg>
+              Enviar mensaje
             </a>
-          )
-        }
+          )}
+          {email && (
+            <span class="text-xs text-ink-muted hidden sm:inline">{email}</span>
+          )}
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ── Contenido principal del perfil ───────────────────────────────── -->
+  <!-- ── Contenido principal del perfil ──────────────────────────────────── -->
   <div
-    class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10"
+    class="max-w-layout mx-auto px-6 sm:px-8 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12"
   >
-    <!-- ── Izquierda: bio + publicaciones ──────────────────────────────── -->
-    <div class="lg:col-span-2 space-y-10">
+    <!-- ── Izquierda: bio + publicaciones ──────────────────────────────────── -->
+    <div class="lg:col-span-2 space-y-12">
       <!-- Biografía -->
       {
         bio && (
           <section aria-labelledby="bio-heading">
             <h2
               id="bio-heading"
-              class="text-lg font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2"
+              class="text-xs tracking-[0.18em] uppercase text-ink-muted mb-4 pb-2 border-b border-paper-border"
             >
               Semblanza
             </h2>
-            <!-- El bio es HTML de WP; sanitizado en la capa de WP (sin HTML de usuario directo) -->
+            <!-- El bio es HTML de WP; sanitizado en la capa de WP -->
             <div
-              class="prose prose-sm prose-gray max-w-none text-gray-700 leading-relaxed"
+              class="prose prose-lg max-w-none text-ink-soft leading-relaxed
+                     prose-headings:text-ink prose-headings:font-semibold
+                     prose-a:text-brand prose-a:no-underline hover:prose-a:underline
+                     prose-strong:text-ink-soft"
               set:html={bio}
             />
           </section>
@@ -193,15 +212,16 @@ const initials = name
           <section aria-labelledby="pub-heading">
             <h2
               id="pub-heading"
-              class="text-lg font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-2"
+              class="text-xs tracking-[0.18em] uppercase text-ink-muted mb-4 pb-2 border-b border-paper-border"
             >
               Publicaciones seleccionadas
             </h2>
-            <ol class="space-y-4" role="list">
+            <ol class="space-y-5" role="list">
               {publicaciones.map((pub) => (
-                <li class="flex gap-3">
+                <li class="flex gap-4">
+                  <!-- Marcador decorativo -->
                   <span
-                    class="text-brand-accent font-semibold text-sm shrink-0 mt-0.5"
+                    class="text-brand-accent font-semibold text-base shrink-0 mt-0.5 select-none"
                     aria-hidden="true"
                   >
                     ▸
@@ -212,14 +232,14 @@ const initials = name
                         href={pub.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-sm font-medium text-brand hover:underline"
+                        class="text-base font-medium text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-sm"
                       >
                         {pub.titulo}
                       </a>
                     ) : (
-                      <p class="text-sm font-medium text-gray-900">{pub.titulo}</p>
+                      <p class="text-base font-medium text-ink">{pub.titulo}</p>
                     )}
-                    <p class="text-xs text-gray-500 mt-0.5">
+                    <p class="text-sm text-ink-muted mt-0.5">
                       {[pub.autores, pub.anio].filter(Boolean).join(' · ')}
                     </p>
                   </div>
@@ -231,21 +251,22 @@ const initials = name
       }
     </div>
 
-    <!-- ── Derecha: sidebar de áreas ─────────────────────────────────────── -->
-    <aside aria-label="Áreas de investigación">
-      <div class="bg-gray-50 rounded-xl p-5 sticky top-4 space-y-6">
+    <!-- ── Derecha: sidebar de áreas + navegación ───────────────────────── -->
+    <aside aria-label="Información complementaria" class="space-y-8">
+      <div class="sticky top-6 space-y-8">
+        <!-- Áreas de investigación -->
         {
           areasInvestigacion.length > 0 && (
             <section aria-labelledby="areas-heading">
               <h2
                 id="areas-heading"
-                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3"
+                class="text-xs tracking-[0.18em] uppercase text-ink-muted mb-4 pb-2 border-b border-paper-border"
               >
                 Áreas de investigación
               </h2>
               <ul class="flex flex-wrap gap-2" role="list">
                 {areasInvestigacion.map((area) => (
-                  <li class="text-xs bg-brand/10 text-brand-light px-2.5 py-1 rounded-full font-medium">
+                  <li class="text-sm text-ink-muted border border-paper-border px-3 py-1 rounded-full leading-6">
                     {area}
                   </li>
                 ))}
@@ -254,27 +275,29 @@ const initials = name
           )
         }
 
-        <!-- Enlace de regreso -->
-        <a
-          href="/"
-          class="flex items-center gap-1.5 text-sm text-gray-600 hover:text-brand transition-colors mt-4"
-          aria-label="Volver al directorio completo"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
+        <!-- Enlace de regreso al directorio -->
+        <div class="border-t border-paper-border pt-6">
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-sm"
+            aria-label="Volver al directorio completo"
           >
-            <path
-              fill-rule="evenodd"
-              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          Volver al directorio
-        </a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            Volver al directorio
+          </a>
+        </div>
       </div>
     </aside>
   </div>

@@ -32,9 +32,9 @@
 
 > Objetivo: repositorio limpio en GitHub, entorno local funcional.
 
-- [ ] `git init` + primer commit con mensaje semántico
-- [ ] Crear repo en GitHub (público, historial limpio para portafolio)
-- [ ] Verificar que `npm run dev` arranca sin errores con `WP_API_BASE_URL` vacía
+- [x] `git init` + primer commit con mensaje semántico
+- [x] Crear repo en GitHub (público, historial limpio para portafolio)
+- [x] Verificar que `npm run dev` arranca sin errores con `WP_API_BASE_URL` vacía
 - [ ] Crear `web/public/favicon.svg`
 - [ ] Crear `web/public/og-default.png`
 
